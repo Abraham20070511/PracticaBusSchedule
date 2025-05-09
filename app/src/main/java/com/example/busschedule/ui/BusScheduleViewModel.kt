@@ -25,21 +25,37 @@ import com.example.busschedule.data.BusSchedule
 import com.example.busschedule.data.BusScheduleDao
 import kotlinx.coroutines.flow.Flow
 
-/*
- * View model for Bus Schedule
- * contains methods to access Room DB through [busScheduleDao]
+/**
+ * ViewModel para el horario de autobuses.
+ *
+ * @param busScheduleDao DAO para acceder a la base de datos Room
  */
 class BusScheduleViewModel(private val busScheduleDao: BusScheduleDao): ViewModel() {
-    // Get full bus schedule from Room DB
+
+    /**
+     * Obtiene el horario completo de autobuses.
+     * @return Flow con la lista de todos los horarios
+     */
     fun getFullSchedule(): Flow<List<BusSchedule>> = busScheduleDao.getAll()
-    // Get bus schedule based on the stop name from Room DB
+
+    /**
+     * Obtiene el horario para una parada específica.
+     * @param stopName Nombre de la parada
+     * @return Flow con la lista de horarios para esa parada
+     */
     fun getScheduleFor(stopName: String): Flow<List<BusSchedule>> =
         busScheduleDao.getByStopName(stopName)
 
+    /**
+     * Companion object que contiene la fábrica para crear este ViewModel.
+     */
     companion object {
-        val factory : ViewModelProvider.Factory = viewModelFactory {
+        // Fábrica para la creación del ViewModel
+        val factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
+                // Obtiene la aplicación del contexto
                 val application = (this[APPLICATION_KEY] as BusScheduleApplication)
+                // Crea una nueva instancia del ViewModel inyectando el DAO
                 BusScheduleViewModel(application.database.busScheduleDao())
             }
         }

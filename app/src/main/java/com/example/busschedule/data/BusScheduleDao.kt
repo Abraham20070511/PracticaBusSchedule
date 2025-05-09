@@ -20,19 +20,26 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Provides access to read/write operations on the schedule table.
- * Used by the view models to format the query results for use in the UI.
+ * Proporciona acceso a las operaciones de lectura/escritura sobre la tabla schedule.
+ * Es utilizado por los ViewModels para formatear los resultados de las consultas y
+ * usarlos en la interfaz de usuario.
  */
-@Dao
+@Dao // Define que esta interfaz es un DAO (Data Access Object) utilizado por Room
 interface BusScheduleDao {
+
+    // Consulta para obtener todos los registros de la tabla 'schedule', ordenados por la hora de llegada
     @Query(
         """
         SELECT * FROM schedule 
         ORDER BY arrival_time ASC    
         """
     )
+    // La consulta devuelve un Flow que emitirá una lista de objetos BusSchedule
+    // Esta lista se actualiza de manera reactiva cada vez que los datos cambian en la base de datos.
     fun getAll(): Flow<List<BusSchedule>>
 
+    // Consulta para obtener los registros de la tabla 'schedule' filtrados por el nombre de la parada (stop_name),
+    // ordenados por la hora de llegada.
     @Query(
         """
         SELECT * FROM schedule 
@@ -40,5 +47,7 @@ interface BusScheduleDao {
         ORDER BY arrival_time ASC 
         """
     )
+    // Al igual que la consulta anterior, esta también devuelve un Flow de una lista de objetos BusSchedule,
+    // pero solo aquellos que coinciden con el nombre de la parada.
     fun getByStopName(stopName: String): Flow<List<BusSchedule>>
 }

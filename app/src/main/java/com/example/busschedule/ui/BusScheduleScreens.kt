@@ -65,57 +65,85 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// Enumeración que define las pantallas disponibles en la app
 enum class BusScheduleScreens {
-    FullSchedule,
-    RouteSchedule
+    FullSchedule,  // Pantalla con todos los horarios
+    RouteSchedule  // Pantalla con horarios de una ruta específica
 }
 
+/**
+ * Composable principal de la aplicación.
+ * @param viewModel ViewModel que maneja la lógica de negocio
+ */
 @Composable
 fun BusScheduleApp(
     viewModel: BusScheduleViewModel = viewModel(factory = BusScheduleViewModel.factory)
 ) {
+    // 1. Controlador de navegación que gestiona el stack de pantallas
     val navController = rememberNavController()
+
+    // 2. Título inicial de la app (usando recursos de strings)
     val fullScheduleTitle = stringResource(R.string.full_schedule)
+
+    // 3. Estado para el título de la TopAppBar (puede cambiar al navegar)
     var topAppBarTitle by remember { mutableStateOf(fullScheduleTitle) }
+
+    // 4. Obtiene el horario completo como un estado observable
     val fullSchedule by viewModel.getFullSchedule().collectAsState(emptyList())
+
+    // 5. Función que maneja el evento de retroceso
     val onBackHandler = {
-        topAppBarTitle = fullScheduleTitle
-        navController.navigateUp()
+        topAppBarTitle = fullScheduleTitle  // Restaura el título
+        navController.navigateUp()  // Navega a la pantalla anterior
     }
 
+    // 6. Scaffold es la estructura base de la pantalla (con TopAppBar y contenido)
     Scaffold(
         topBar = {
+            // 7. Barra superior personalizada
             BusScheduleTopAppBar(
                 title = topAppBarTitle,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 onBackClick = { onBackHandler() }
             )
         }
-    ) { innerPadding ->
+    ) { innerPadding ->  // Padding interno calculado por Scaffold
+        // 8. Sistema de navegación
         NavHost(
             navController = navController,
             startDestination = BusScheduleScreens.FullSchedule.name
         ) {
+            // 9. Definición de la pantalla de horario completo
             composable(BusScheduleScreens.FullSchedule.name) {
                 FullScheduleScreen(
                     busSchedules = fullSchedule,
                     contentPadding = innerPadding,
                     onScheduleClick = { busStopName ->
+                        // 10. Navega a la pantalla de detalle al hacer clic en una ruta
                         navController.navigate(
                             "${BusScheduleScreens.RouteSchedule.name}/$busStopName"
                         )
-                        topAppBarTitle = busStopName
+                        topAppBarTitle = busStopName  // Actualiza el título
                     }
                 )
             }
+
+            // 11. Argumento para pasar el nombre de la parada entre pantallas
             val busRouteArgument = "busRoute"
+
+            // 12. Definición de la pantalla de horario por ruta
             composable(
                 route = BusScheduleScreens.RouteSchedule.name + "/{$busRouteArgument}",
                 arguments = listOf(navArgument(busRouteArgument) { type = NavType.StringType })
             ) { backStackEntry ->
+                // 13. Obtiene el nombre de la parada desde los argumentos
                 val stopName = backStackEntry.arguments?.getString(busRouteArgument)
                     ?: error("busRouteArgument cannot be null")
+
+                // 14. Obtiene el horario específico para esa parada
                 val routeSchedule by viewModel.getScheduleFor(stopName).collectAsState(emptyList())
+
+                // 15. Muestra la pantalla de detalle
                 RouteScheduleScreen(
                     stopName = stopName,
                     busSchedules = routeSchedule,
@@ -127,6 +155,13 @@ fun BusScheduleApp(
     }
 }
 
+/**
+ * Pantalla que muestra todos los horarios disponibles.
+ * @param busSchedules Lista de horarios
+ * @param onScheduleClick Callback al seleccionar una ruta
+ * @param modifier Modificador para personalización
+ * @param contentPadding Padding interno
+ */
 @Composable
 fun FullScheduleScreen(
     busSchedules: List<BusSchedule>,
@@ -134,6 +169,7 @@ fun FullScheduleScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+    // 16. Reutiliza el componente base pasando el callback
     BusScheduleScreen(
         busSchedules = busSchedules,
         onScheduleClick = onScheduleClick,
@@ -142,6 +178,14 @@ fun FullScheduleScreen(
     )
 }
 
+/**
+ * Pantalla que muestra los horarios de una ruta específica.
+ * @param stopName Nombre de la parada
+ * @param busSchedules Lista de horarios para esta parada
+ * @param modifier Modificador para personalización
+ * @param contentPadding Padding interno
+ * @param onBack Callback para el botón de retroceso
+ */
 @Composable
 fun RouteScheduleScreen(
     stopName: String,
@@ -150,7 +194,10 @@ fun RouteScheduleScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onBack: () -> Unit = {}
 ) {
+    // 17. Maneja el botón de retroceso físico
     BackHandler { onBack() }
+
+    // 18. Reutiliza el componente base especificando el nombre de la parada
     BusScheduleScreen(
         busSchedules = busSchedules,
         modifier = modifier,
@@ -159,6 +206,14 @@ fun RouteScheduleScreen(
     )
 }
 
+/**
+ * Componente base para mostrar horarios de autobuses.
+ * @param busSchedules Lista de horarios
+ * @param modifier Modificador para personalización
+ * @param contentPadding Padding interno
+ * @param stopName Nombre de la parada (opcional)
+ * @param onScheduleClick Callback al seleccionar (opcional)
+ */
 @Composable
 fun BusScheduleScreen(
     busSchedules: List<BusSchedule>,
@@ -167,18 +222,24 @@ fun BusScheduleScreen(
     stopName: String? = null,
     onScheduleClick: ((String) -> Unit)? = null,
 ) {
+    // 19. Determina el texto del encabezado según si hay nombre de parada específico
     val stopNameText = if (stopName == null) {
-        stringResource(R.string.stop_name)
+        stringResource(R.string.stop_name)  // Texto genérico
     } else {
-        "$stopName ${stringResource(R.string.route_stop_name)}"
+        "$stopName ${stringResource(R.string.route_stop_name)}"  // Texto específico
     }
+
+    // 20. Obtiene la dirección del layout (LTR o RTL)
     val layoutDirection = LocalLayoutDirection.current
+
+    // 21. Columna principal que organiza los elementos
     Column(
         modifier = modifier.padding(
             start = contentPadding.calculateStartPadding(layoutDirection),
             end = contentPadding.calculateEndPadding(layoutDirection),
         )
     ) {
+        // 22. Fila para los encabezados de las columnas
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -187,14 +248,16 @@ fun BusScheduleScreen(
                     bottom = dimensionResource(R.dimen.padding_medium),
                     start = dimensionResource(R.dimen.padding_medium),
                     end = dimensionResource(R.dimen.padding_medium),
-                )
-            ,
-            horizontalArrangement = Arrangement.SpaceBetween
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween  // Espacio entre elementos
         ) {
-            Text(stopNameText)
-            Text(stringResource(R.string.arrival_time))
+            Text(stopNameText)  // Encabezado de nombre de parada
+            Text(stringResource(R.string.arrival_time))  // Encabezado de hora
         }
-        Divider()
+
+        Divider()  // 23. Línea divisoria
+
+        // 24. Componente con la lista de horarios
         BusScheduleDetails(
             contentPadding = PaddingValues(
                 bottom = contentPadding.calculateBottomPadding()
@@ -205,11 +268,12 @@ fun BusScheduleScreen(
     }
 }
 
-/*
- * Composable for BusScheduleDetails which show list of bus schedule
- * When [onScheduleClick] is null, [stopName] is replaced with placeholder
- * as it is assumed [stopName]s are the same as shown
- * in the list heading display in [BusScheduleScreen]
+/**
+ * Componente que muestra la lista de horarios.
+ * @param busSchedules Lista de horarios
+ * @param modifier Modificador para personalización
+ * @param contentPadding Padding interno
+ * @param onScheduleClick Callback al seleccionar (opcional)
  */
 @Composable
 fun BusScheduleDetails(
@@ -218,24 +282,30 @@ fun BusScheduleDetails(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     onScheduleClick: ((String) -> Unit)? = null
 ) {
+    // 25. LazyColumn es una lista eficiente que solo renderiza lo visible
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
     ) {
+        // 26. Itera sobre los horarios
         items(
             items = busSchedules,
-            key = { busSchedule -> busSchedule.id }
+            key = { busSchedule -> busSchedule.id }  // Clave única para cada item
         ) { schedule ->
+            // 27. Fila para cada horario
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(enabled = onScheduleClick != null) {
+                        // 28. Si hay callback, lo ejecuta al hacer clic
                         onScheduleClick?.invoke(schedule.stopName)
                     }
                     .padding(dimensionResource(R.dimen.padding_medium)),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // 29. Renderizado condicional del nombre de parada
                 if (onScheduleClick == null) {
+                    // 30. Si no hay callback, muestra un placeholder
                     Text(
                         text = "--",
                         style = MaterialTheme.typography.bodyLarge.copy(
@@ -246,6 +316,7 @@ fun BusScheduleDetails(
                         modifier = Modifier.weight(1f)
                     )
                 } else {
+                    // 31. Muestra el nombre real de la parada
                     Text(
                         text = schedule.stopName,
                         style = MaterialTheme.typography.bodyLarge.copy(
@@ -254,21 +325,30 @@ fun BusScheduleDetails(
                         )
                     )
                 }
+
+                // 32. Muestra la hora formateada
                 Text(
                     text = SimpleDateFormat("h:mm a", Locale.getDefault())
                         .format(Date(schedule.arrivalTimeInMillis.toLong() * 1000)),
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = dimensionResource(R.dimen.font_large).value.sp,
-                        fontWeight = FontWeight(600)
+                        fontWeight = FontWeight(600)  // Texto más grueso
                     ),
                     textAlign = TextAlign.End,
-                    modifier = Modifier.weight(2f)
+                    modifier = Modifier.weight(2f)  // Ocupa más espacio
                 )
             }
         }
     }
 }
 
+/**
+ * Barra superior personalizada.
+ * @param title Título a mostrar
+ * @param canNavigateBack Si muestra el botón de retroceso
+ * @param onBackClick Callback para el botón de retroceso
+ * @param modifier Modificador para personalización
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusScheduleTopAppBar(
@@ -277,28 +357,31 @@ fun BusScheduleTopAppBar(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 33. Renderizado condicional según si debe mostrar botón de retroceso
     if (canNavigateBack) {
         TopAppBar(
-            title = { Text(title) },
+            title = { Text(title) },  // Título
             navigationIcon = {
+                // 34. Botón de retroceso con icono
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = stringResource(
-                            R.string.back
-                        )
+                        contentDescription = stringResource(R.string.back)
                     )
                 }
             },
             modifier = modifier
         )
     } else {
+        // 35. Barra sin botón de retroceso
         TopAppBar(
             title = { Text(title) },
             modifier = modifier
         )
     }
 }
+
+// Previews para Android Studio
 
 @Preview(showBackground = true)
 @Composable

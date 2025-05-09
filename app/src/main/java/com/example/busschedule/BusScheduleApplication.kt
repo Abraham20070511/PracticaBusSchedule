@@ -18,6 +18,21 @@ package com.example.busschedule
 import android.app.Application
 import com.example.busschedule.data.AppDatabase
 
-class BusScheduleApplication: Application() {
-    val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
+/**
+ * Clase Application personalizada para la app de horarios de autobuses.
+ *
+ * Proporciona acceso a la base de datos Room para toda la aplicación.
+ */
+class BusScheduleApplication : Application() {
+
+    /**
+     * Instancia de la base de datos Room, inicializada de forma lazy.
+     *
+     * Se crea solo cuando se accede por primera vez usando el patrón lazy.
+     * Es accesible desde cualquier parte de la aplicación.
+     */
+    val database: AppDatabase by lazy {
+        // Obtiene la instancia de la base de datos cuando se necesita por primera vez
+        AppDatabase.getDatabase(this)
+    }
 }
